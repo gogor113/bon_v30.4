@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>BON - Utang Warung v37.0 (Online Only + Cloud Database)</title>
+  <title>BON - Utang Warung v37.0 (Auto Sync Cloud + Fix Login Data)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -287,7 +287,8 @@
     .btn-salin,
     .btn-hapus,
     .btn-bon-baru,
-    .btn-share {
+    .btn-share,
+    .btn-sync {
       padding: 10px;
       border-radius: 12px;
       border: none;
@@ -304,7 +305,8 @@
       .btn-salin,
       .btn-hapus,
       .btn-bon-baru,
-      .btn-share {
+      .btn-share,
+      .btn-sync {
         padding: 14px;
         font-size: 18px;
         border-radius: 16px;
@@ -317,6 +319,7 @@
     .btn-hapus { background: linear-gradient(135deg, #fc8181, #f56565); color: white; }
     .btn-bon-baru { background: linear-gradient(135deg, #48bb78, #38a169); color: white; }
     .btn-share { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; }
+    .btn-sync { background: linear-gradient(135deg, #38b2ac, #319795); color: white; }
 
     #cariPelanggan {
       margin-top: 10px;
@@ -421,6 +424,86 @@
       margin-left: 8px;
     }
 
+    .backup-section {
+      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+      padding: 20px;
+      border-radius: 20px;
+      margin: 20px 0;
+      border: 2px dashed #9f7aea;
+      text-align: center;
+    }
+
+    @media (min-width: 769px) {
+      .backup-section {
+        padding: 28px;
+        margin: 28px 0;
+        border-width: 3px;
+      }
+    }
+
+    .backup-section h2 {
+      margin-bottom: 12px;
+      font-size: 1.4em;
+      background: linear-gradient(135deg, #805ad5, #6b46c0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    @media (min-width: 769px) {
+      .backup-section h2 {
+        font-size: 1.7em;
+        margin-bottom: 16px;
+      }
+    }
+    .backup-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .backup-btn {
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+      flex: 1;
+      min-width: 140px;
+      transition: all 0.3s ease;
+    }
+
+    .backup-btn:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.05);
+    }
+
+    @media (min-width: 769px) {
+      .backup-btn {
+        padding: 16px 24px;
+        font-size: 18px;
+        min-width: 180px;
+      }
+    }
+
+    .btn-backup {
+      background: linear-gradient(135deg, #9f7aea, #805ad5);
+      color: white;
+    }
+
+    .backup-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #6b46c0;
+      line-height: 1.4;
+    }
+    @media (min-width: 769px) {
+      .backup-note {
+        font-size: 16px;
+        margin-top: 16px;
+      }
+    }
     .share-modal {
       background: linear-gradient(145deg, #ffffff, #f7fafc);
       padding: 24px;
@@ -547,6 +630,12 @@
       .highlight-info {
         font-size: 2em;
       }
+    }
+
+    .salin-semua-btn {
+      background: linear-gradient(135deg, #38b2ac, #319795, #2c7a7b);
+      color: white;
+      margin-top: 10px;
     }
 
     .status-lunas {
@@ -717,33 +806,77 @@
       color: transparent;
     }
 
-    .online-badge {
+    #storageStatusBadge {
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+    }
+    
+    .sync-status {
+      background: linear-gradient(135deg, #ecc94b, #d69e2e);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    
+    .google-sheet-section {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      padding: 20px;
+      border-radius: 20px;
+      margin: 20px 0;
+      border: 2px solid #38b2ac;
+      text-align: center;
+    }
+    .google-sheet-section h2 {
+      margin-bottom: 12px;
+      font-size: 1.4em;
+      background: linear-gradient(135deg, #38b2ac, #319795);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    @media (min-width: 769px) {
+      .google-sheet-section h2 {
+        font-size: 1.7em;
+        margin-bottom: 16px;
+      }
+    }
+    .auto-sync-badge {
       background: linear-gradient(135deg, #48bb78, #38a169);
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 11px;
       display: inline-block;
+      margin-bottom: 12px;
+      color: white;
+    }
+    
+    .sync-warning {
+      background: linear-gradient(135deg, #ecc94b, #d69e2e);
+      color: #744210;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .sync-queue-badge {
+      background: linear-gradient(135deg, #ed8936, #dd6b20);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: bold;
       margin-left: 8px;
     }
     
-    .offline-badge {
-      background: linear-gradient(135deg, #f56565, #e53e3e);
-      padding: 4px 12px;
-      border-radius: 20px;
+    .cloud-error-detail {
       font-size: 11px;
-      display: inline-block;
-      margin-left: 8px;
-    }
-
-    .network-warning {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      padding: 12px;
-      border-radius: 16px;
-      margin: 12px 0;
-      text-align: center;
-      font-weight: bold;
-      color: #744210;
-      border: 2px solid #f6ad55;
+      color: #e53e3e;
+      margin-top: 8px;
+      word-break: break-all;
     }
 
     .loading-spinner {
@@ -765,23 +898,32 @@
       opacity: 0.7;
       pointer-events: none;
     }
+
+    .hidden-config {
+      display: none !important;
+    }
+
+    .cleanup-stats {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      padding: 12px;
+      border-radius: 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="authHeaderBar" class="auth-header-container hidden">
       <span>👤 Pengguna: <span id="currentUsernameLabel">-</span></span>
-      <span id="onlineStatusBadge" class="online-badge">🟢 Online</span>
+      <span id="storageStatusBadge">☁️ v37.0</span>
       <button class="btn-auth-logout" onclick="executeLogout()">🚪 Keluar</button>
     </div>
 
     <header>BON v37.0</header>
 
     <div id="authScreenSection" class="auth-screen">
-      <div id="networkWarning" class="network-warning hidden">
-        ⚠️ Periksa koneksi internet Anda! Aplikasi hanya bisa diakses secara ONLINE.
-      </div>
-      
       <div class="auth-tab-nav">
         <div id="tabLogin" class="auth-tab-item active" onclick="switchAuthTab('login')">Masuk</div>
         <div id="tabRegister" class="auth-tab-item" onclick="switchAuthTab('register')">Daftar Akun</div>
@@ -855,6 +997,36 @@
       
       <input type="text" id="cariPelanggan" maxlength="100" placeholder="Cari nama pelanggan..." oninput="debouncedFilterPelanggan()">
       <div id="daftarPelanggan">Belum ada yang ngebon.</div>
+
+      <div id="cleanupStats" class="cleanup-stats hidden"></div>
+
+      <div class="google-sheet-section">
+        <div class="auto-sync-badge">⚡ VERSI 37.0 - AUTO LOGIN SYNC + CLOUD MERGE</div>
+        <h2>☁️ Cloud Backup & Restore (Multi Device)</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span>Status Sinkronisasi:</span>
+          <span id="syncStatusText" class="sync-status">Memeriksa...</span>
+          <span id="syncQueueCount" class="sync-queue-badge">0 antrian</span>
+        </div>
+        <div id="cloudDataInfo" style="font-size: 12px; margin-bottom: 12px;"></div>
+        <div id="cloudErrorDetail" class="cloud-error-detail hidden"></div>
+        <div class="backup-buttons">
+          <button class="backup-btn" onclick="syncToGoogleSheets()" style="background:linear-gradient(135deg, #38b2ac, #319795);color:white;">☁️ Sinkronisasi Sekarang</button>
+          <button class="backup-btn" onclick="pullFromCloud()" style="background:linear-gradient(135deg, #48bb78, #38a169);color:white;">📥 Tarik Data Cloud</button>
+          <button class="backup-btn" onclick="fullMergeSync()" style="background:linear-gradient(135deg, #9f7aea, #805ad5);color:white;">🔄 Sinkronisasi Penuh</button>
+          <button class="backup-btn" onclick="testGScriptConnection()" style="background:linear-gradient(135deg, #ed8936, #dd6b20);color:white;">🔌 Test Koneksi Cloud</button>
+          <button class="backup-btn" onclick="manualCleanupLunas()" style="background:linear-gradient(135deg, #e53e3e, #c53030);color:white;">🧹 Hapus Data Lunas</button>
+        </div>
+        <p class="backup-note">
+          • Data dari semua perangkat digabung secara otomatis (MERGE) tanpa saling menimpa<br>
+          • Setiap data memiliki ID unik + timestamp untuk prioritas data terbaru<br>
+          • ✅ Pelanggan yang sudah LUNAS otomatis dihapus dari sistem<br>
+          • 💰 Jika kelebihan bayar, tampilkan total kembalian saja<br>
+          • Data tetap aman di IndexedDB + Cloud sync otomatis<br>
+          • Login/Daftar/Lupa Sandi selalu sinkron dengan Cloud ☁️<br>
+          • Versi 37.0: Auto sync setelah login + fix pengambilan data dari cloud
+        </p>
+      </div>
     </div>
   </div>
 
@@ -897,6 +1069,7 @@
     </div>
   </div>
 
+  <!-- Hidden config area - v37.0 -->
   <div id="gscriptConfigArea" style="display: none;">
     <input type="hidden" id="webAppUrl" value="https://script.google.com/macros/s/AKfycbwo7ZStj-z7q2vgSuQ_0uMLY19bPZXPPG0uXNLsrhrV5NSJorL-DmKqDSc3xFbri7C0/exec">
     <input type="hidden" id="spreadsheetUrl" value="">
@@ -904,14 +1077,12 @@
   </div>
 
   <script>
-    // ==================== VERSI 37.0 - ONLINE ONLY + CLOUD DATABASE ====================
+    // ==================== VERSI 37.0 - AUTO LOGIN SYNC + FIX CLOUD DATA PULL ====================
     // Upgrade dari v36.0 ke v37.0:
-    // 1. Hanya bisa diakses saat ONLINE
-    // 2. Data otomatis sync setelah login
-    // 3. Tidak ada tombol sync manual - semua otomatis
-    // 4. Database utama di Google Sheets (Cloud)
-    // 5. Perangkat tidak menyimpan data permanen
-    // 6. Setiap perubahan langsung sync ke cloud
+    // 1. FIX: Setelah login, data otomatis diambil dari cloud
+    // 2. FIX: Data user tetap tersimpan di cloud antar login
+    // 3. Enhanced sync setelah login dan registrasi
+    // 4. Auto sync data dari sheet setiap login
     
     const APP_VERSION = '37.0';
     
@@ -921,9 +1092,20 @@
     let keranjang = [];
     let activeUser = null;
     let currentAuthTab = 'login';
-    let isOnline = navigator.onLine;
+    let dbInstance = null;
+    let useIndexedDB = false;
+    let autoSyncEnabled = true;
     let isSyncing = false;
+    let cloudHasData = false;
+    let hasLocalData = false;
     let syncQueue = [];
+    let lastSyncTimestamp = null;
+    let syncInterval = null;
+    let lastDataHash = '';
+    let retryCounters = new Map();
+    const MAX_RETRY = 5;
+    const DB_NAME = 'BonWarungDB_Unlimited_v37';
+    const DB_VERSION = 25;
     
     // Utility Functions
     function getWebAppUrl() {
@@ -931,7 +1113,7 @@
       if (hiddenInput && hiddenInput.value) {
         return hiddenInput.value;
       }
-      return "https://script.google.com/macros/s/AKfycbwJy2nKRgnKPANHZAhI-hXkWqylsE24-v_amfg-WhEFmPNSzumXBwrMDLtLPHIOoYkIaQ/exec";
+      return "https://script.google.com/macros/s/AKfycbwo7ZStj-z7q2vgSuQ_0uMLY19bPZXPPG0uXNLsrhrV5NSJorL-DmKqDSc3xFbri7C0/exec";
     }
     
     function safeString(str, maxlength = 100) {
@@ -976,41 +1158,20 @@
       try { return JSON.parse(str); } catch(e) { return null; }
     }
     
-    function updateOnlineStatus() {
-      isOnline = navigator.onLine;
-      const statusBadge = document.getElementById('onlineStatusBadge');
-      const networkWarning = document.getElementById('networkWarning');
-      
-      if (statusBadge) {
-        if (isOnline) {
-          statusBadge.textContent = '🟢 Online';
-          statusBadge.className = 'online-badge';
-        } else {
-          statusBadge.textContent = '🔴 Offline';
-          statusBadge.className = 'offline-badge';
-        }
-      }
-      
-      if (networkWarning) {
-        if (!isOnline) {
-          networkWarning.classList.remove('hidden');
-        } else {
-          networkWarning.classList.add('hidden');
-        }
-      }
-      
-      // Jika offline dan sedang login, logout otomatis
-      if (!isOnline && activeUser) {
-        showToast('⚠️ Koneksi terputus! Aplikasi akan logout.', true);
-        executeLogout();
-      }
-      
-      // Jika offline, cegah akses main app
-      if (!isOnline && !document.getElementById('authScreenSection').classList.contains('hidden')) {
-        // Masih di halaman login, ok
-      } else if (!isOnline && activeUser) {
-        executeLogout();
-      }
+    function getDataHash() {
+      const dataToHash = { bons: semuaBon.map(b => ({ ...b, lastModified: b.lastModified })), payments: pembayaran.map(p => ({ ...p, lastModified: p.lastModified })) };
+      return JSON.stringify(dataToHash);
+    }
+    
+    function checkHasLocalData() {
+      hasLocalData = (semuaBon.length > 0 || pembayaran.length > 0);
+      return hasLocalData;
+    }
+    
+    let filterTimeout;
+    function debouncedFilterPelanggan() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => renderDaftarPelanggan(), 300);
     }
     
     // ============ CLOUD SYNC FUNCTIONS ============
@@ -1034,18 +1195,69 @@
       }
     }
     
-    // Fetch data dari cloud berdasarkan username
-    async function fetchUserDataFromCloud(username) {
-      if (!username) return null;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return null;
+    async function pushAllLocalDataToCloud() {
+      if (!activeUser) return false;
+      
+      const hasData = checkHasLocalData();
+      if (!hasData) return true;
+      
+      const WEB_APP_URL = getWebAppUrl();
+      const backupData = {
+        username: activeUser,
+        semuaBon: semuaBon.map(bon => ({ 
+          ...bon, 
+          lastModified: bon.lastModified || getISOTimestamp(),
+          uniqueId: bon.uniqueId || generateUniqueId()
+        })),
+        pembayaran: pembayaran.map(p => ({ 
+          ...p, 
+          lastModified: p.lastModified || getISOTimestamp(),
+          uniqueId: p.uniqueId || generateUniqueId()
+        })),
+        backupTime: getISOTimestamp(),
+        syncType: 'merge_v37_0',
+        deviceId: localStorage.getItem('deviceId') || (() => { const id = generateUniqueId(); localStorage.setItem('deviceId', id); return id; })()
+      };
+      
+      const formData = new URLSearchParams();
+      formData.append('action', 'mergeBackupV36');
+      formData.append('data', JSON.stringify(backupData));
+      
+      try {
+        const response = await fetchWithTimeout(WEB_APP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+        }, 30000);
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result && result.success) {
+            cloudHasData = true;
+            updateSyncStatusUI(true);
+            if (result.cleanedUp && result.cleanedUp > 0) {
+              showToast(`🧹 ${result.cleanedUp} pelanggan lunas otomatis dihapus dari cloud`);
+            }
+            return true;
+          }
+        }
+        return false;
+      } catch (error) {
+        console.error('Push to cloud error:', error);
+        updateSyncStatusUI(false);
+        return false;
       }
+    }
+    
+    async function fetchRemoteDataV37() {
+      if (!activeUser) return null;
       
       const WEB_APP_URL = getWebAppUrl();
       const formData = new URLSearchParams();
-      formData.append('action', 'getUserData');
-      formData.append('username', username);
+      formData.append('action', 'restoreV36');
+      formData.append('username', activeUser);
+      formData.append('lastSync', lastSyncTimestamp || '');
+      formData.append('deviceId', localStorage.getItem('deviceId') || '');
       
       try {
         const response = await fetchWithTimeout(WEB_APP_URL, {
@@ -1073,187 +1285,394 @@
       }
     }
     
-    // Push data ke cloud (full sync)
-    async function pushUserDataToCloud(username, bonData, paymentData, isDelete = false) {
-      if (!username) return false;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet! Data tidak tersimpan.', true);
-        return false;
+    function mergeBonData(localBons, remoteBons) {
+      const mergedBonMap = new Map();
+      
+      localBons.forEach(bon => {
+        if (!bon.uniqueId) bon.uniqueId = generateUniqueId();
+        if (!bon.lastModified) bon.lastModified = getISOTimestamp();
+        const timestamp = new Date(bon.lastModified).getTime();
+        mergedBonMap.set(bon.uniqueId, { ...bon, _timestamp: timestamp });
+      });
+      
+      remoteBons.forEach(remoteBon => {
+        if (!remoteBon.uniqueId) remoteBon.uniqueId = generateUniqueId();
+        if (!remoteBon.lastModified) remoteBon.lastModified = getISOTimestamp();
+        const localBon = mergedBonMap.get(remoteBon.uniqueId);
+        const remoteTimestamp = new Date(remoteBon.lastModified).getTime();
+        
+        if (!localBon) {
+          mergedBonMap.set(remoteBon.uniqueId, { ...remoteBon, _timestamp: remoteTimestamp });
+        } else if (remoteTimestamp > localBon._timestamp) {
+          mergedBonMap.set(remoteBon.uniqueId, { ...remoteBon, _timestamp: remoteTimestamp });
+        }
+      });
+      
+      return Array.from(mergedBonMap.values()).map(({ _timestamp, ...bon }) => bon);
+    }
+    
+    function mergePembayaranData(localPayments, remotePayments) {
+      const mergedPayMap = new Map();
+      
+      localPayments.forEach(payment => {
+        if (!payment.uniqueId) payment.uniqueId = generateUniqueId();
+        if (!payment.lastModified) payment.lastModified = getISOTimestamp();
+        const timestamp = new Date(payment.lastModified).getTime();
+        mergedPayMap.set(payment.uniqueId, { ...payment, _timestamp: timestamp });
+      });
+      
+      remotePayments.forEach(remotePayment => {
+        if (!remotePayment.uniqueId) remotePayment.uniqueId = generateUniqueId();
+        if (!remotePayment.lastModified) remotePayment.lastModified = getISOTimestamp();
+        const localPayment = mergedPayMap.get(remotePayment.uniqueId);
+        const remoteTimestamp = new Date(remotePayment.lastModified).getTime();
+        
+        if (!localPayment || remoteTimestamp > localPayment._timestamp) {
+          mergedPayMap.set(remotePayment.uniqueId, { ...remotePayment, _timestamp: remoteTimestamp });
+        }
+      });
+      
+      return Array.from(mergedPayMap.values()).map(({ _timestamp, ...payment }) => payment);
+    }
+    
+    async function fullMergeSync() {
+      if (!activeUser) { showToast("❌ Harap login terlebih dahulu!", true); return; }
+      
+      showToast("🔄 Melakukan sinkronisasi penuh (merge data v37.0)...");
+      
+      const pushSuccess = await pushAllLocalDataToCloud();
+      if (!pushSuccess) showToast("⚠️ Gagal mengirim data ke cloud", true);
+      
+      const remoteData = await fetchRemoteDataV37();
+      if (remoteData && !remoteData.error) {
+        const mergedBons = mergeBonData(semuaBon, remoteData.semuaBon || []);
+        const mergedPayments = mergePembayaranData(pembayaran, remoteData.pembayaran || []);
+        
+        semuaBon = mergedBons;
+        pembayaran = mergedPayments;
+        
+        await simpanKeStorage(false);
+        renderDaftarPelanggan();
+        
+        await pushAllLocalDataToCloud();
+        showToast(`✅ Sinkronisasi selesai! Total: ${semuaBon.length} bon, ${pembayaran.length} bayar`);
+      } else if (remoteData?.error === 'NO_DATA') {
+        await pushAllLocalDataToCloud();
+        showToast(`✅ Data lokal telah diupload ke Cloud.`);
+      } else {
+        showToast(`⚠️ Gagal mengambil data dari Cloud`, true);
       }
       
+      // Jalankan auto cleanup setelah sync
+      await autoCleanupLunasPelanggan();
+    }
+    
+    async function syncAfterLogin() {
+      // Fungsi khusus untuk sync setelah login
+      if (!activeUser) return;
+      
+      showToast(`☁️ Mengambil data ${activeUser} dari Cloud...`);
+      
+      const remoteData = await fetchRemoteDataV37();
+      
+      if (remoteData && !remoteData.error && remoteData.semuaBon && remoteData.semuaBon.length > 0) {
+        const mergedBons = mergeBonData(semuaBon, remoteData.semuaBon || []);
+        const mergedPayments = mergePembayaranData(pembayaran, remoteData.pembayaran || []);
+        
+        semuaBon = mergedBons;
+        pembayaran = mergedPayments;
+        
+        await simpanKeStorage(false);
+        renderDaftarPelanggan();
+        showToast(`✅ Data dari Cloud berhasil dimuat! (${semuaBon.length} bon)`);
+        updateSyncStatusUI(true);
+      } else if (remoteData && remoteData.error === 'NO_DATA') {
+        showToast(`ℹ️ Belum ada data di Cloud untuk user ini. Data lokal akan disimpan.`);
+        // Upload data lokal jika ada
+        if (semuaBon.length > 0 || pembayaran.length > 0) {
+          await pushAllLocalDataToCloud();
+        }
+      } else if (remoteData && remoteData.error) {
+        showToast(`⚠️ Gagal mengambil data dari Cloud: ${remoteData.error}`, true);
+        updateSyncStatusUI(false);
+      } else {
+        // Tidak ada data remote atau error
+        if (semuaBon.length > 0 || pembayaran.length > 0) {
+          await pushAllLocalDataToCloud();
+        }
+      }
+      
+      // Auto cleanup setelah sync
+      await autoCleanupLunasPelanggan();
+    }
+    
+    async function syncToGoogleSheets() {
+      if (!activeUser) { showToast("❌ Harap login terlebih dahulu!", true); return; }
+      await fullMergeSync();
+    }
+    
+    async function pullFromCloud() {
+      if (!activeUser) { showToast("❌ Harap login ter dahulu!", true); return; }
+      
+      showToast(`☁️ Mengambil data ${activeUser} dari Cloud...`);
+      const remoteData = await fetchRemoteDataV37();
+      
+      if (!remoteData || remoteData.error) {
+        showToast(`⚠️ Gagal mengambil data: ${remoteData?.error || 'Unknown'}`, true);
+        return;
+      }
+      
+      const mergedBons = mergeBonData(semuaBon, remoteData.semuaBon || []);
+      const mergedPayments = mergePembayaranData(pembayaran, remoteData.pembayaran || []);
+      
+      semuaBon = mergedBons;
+      pembayaran = mergedPayments;
+      
+      await simpanKeStorage(false);
+      renderDaftarPelanggan();
+      showToast(`✅ Data berhasil digabung!`);
+    }
+    
+    async function testGScriptConnection() {
+      showToast("🔄 Menguji koneksi ke Cloud...");
       const WEB_APP_URL = getWebAppUrl();
-      const backupData = {
-        username: username,
-        semuaBon: bonData.map(bon => ({ 
-          ...bon, 
-          lastModified: bon.lastModified || getISOTimestamp(),
-          uniqueId: bon.uniqueId || generateUniqueId()
-        })),
-        pembayaran: paymentData.map(p => ({ 
-          ...p, 
-          lastModified: p.lastModified || getISOTimestamp(),
-          uniqueId: p.uniqueId || generateUniqueId()
-        })),
-        backupTime: getISOTimestamp(),
-        syncType: 'full_sync_v37_0',
-        isDelete: isDelete
-      };
-      
-      const formData = new URLSearchParams();
-      formData.append('action', 'saveUserData');
-      formData.append('data', JSON.stringify(backupData));
-      
       try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'testConnection');
+        
         const response = await fetchWithTimeout(WEB_APP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: formData.toString()
-        }, 30000);
+        }, 15000);
         
         if (response.ok) {
-          const result = await response.json();
-          if (result && result.success) {
-            return true;
+          const data = await response.json();
+          if (data && data.success) {
+            showToast(`✅ Cloud v${data.version || APP_VERSION} siap!`);
+            updateSyncStatusUI(true);
+          } else {
+            showToast(`⚠️ Cloud: ${data?.message || 'Error'}`, true);
           }
-        }
-        return false;
-      } catch (error) {
-        console.error('Push to cloud error:', error);
-        return false;
-      }
-    }
-    
-    // Login ke cloud (verifikasi username & password)
-    async function cloudLogin(username, password) {
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return { success: false, message: 'No internet connection' };
-      }
-      
-      const WEB_APP_URL = getWebAppUrl();
-      const formData = new URLSearchParams();
-      formData.append('action', 'login');
-      formData.append('username', username);
-      formData.append('password', password);
-      
-      try {
-        const response = await fetchWithTimeout(WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString()
-        }, 30000);
-        
-        if (!response.ok) return { success: false, message: `HTTP ${response.status}` };
-        
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        return { success: false, message: error.message };
-      }
-    }
-    
-    // Registrasi ke cloud
-    async function cloudRegister(username, password, security) {
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return { success: false, message: 'No internet connection' };
-      }
-      
-      const WEB_APP_URL = getWebAppUrl();
-      const formData = new URLSearchParams();
-      formData.append('action', 'register');
-      formData.append('username', username);
-      formData.append('password', password);
-      formData.append('security', JSON.stringify(security));
-      
-      try {
-        const response = await fetchWithTimeout(WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString()
-        }, 30000);
-        
-        if (!response.ok) return { success: false, message: `HTTP ${response.status}` };
-        
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        return { success: false, message: error.message };
-      }
-    }
-    
-    // Reset password via cloud
-    async function cloudResetPassword(username, newPassword, securityAnswers) {
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return { success: false, message: 'No internet connection' };
-      }
-      
-      const WEB_APP_URL = getWebAppUrl();
-      const formData = new URLSearchParams();
-      formData.append('action', 'resetPassword');
-      formData.append('username', username);
-      formData.append('newPassword', newPassword);
-      formData.append('security', JSON.stringify(securityAnswers));
-      
-      try {
-        const response = await fetchWithTimeout(WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString()
-        }, 30000);
-        
-        if (!response.ok) return { success: false, message: `HTTP ${response.status}` };
-        
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        return { success: false, message: error.message };
-      }
-    }
-    
-    // Auto sync setelah perubahan data
-    async function autoSyncToCloud() {
-      if (!activeUser) return false;
-      if (!navigator.onLine) {
-        showToast('⚠️ Offline mode - data tidak tersimpan ke cloud', true);
-        return false;
-      }
-      
-      if (isSyncing) {
-        return false;
-      }
-      
-      isSyncing = true;
-      try {
-        const success = await pushUserDataToCloud(activeUser, semuaBon, pembayaran);
-        if (success) {
-          showToast('☁️ Data tersimpan ke cloud');
         } else {
-          showToast('⚠️ Gagal sync ke cloud', true);
+          showToast(`⚠️ Cloud: HTTP ${response.status}`, true);
         }
-        return success;
-      } finally {
-        isSyncing = false;
+      } catch (error) {
+        showToast(`⚠️ Koneksi gagal: ${error.message}`, true);
+        updateSyncStatusUI(false);
       }
     }
     
-    // Load data dari cloud setelah login
-    async function loadDataFromCloud() {
-      if (!activeUser) return false;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return false;
+    // ============ AUTO CLEANUP LUNAS PELANGGAN ============
+    
+    async function autoCleanupLunasPelanggan() {
+      if (!activeUser) return { removedCount: 0, removedList: [] };
+      
+      // Hitung total utang dan pembayaran per pelanggan
+      const pelangganMap = new Map();
+      
+      semuaBon.forEach(bon => {
+        const key = bon.namaPelanggan.toLowerCase();
+        const existing = pelangganMap.get(key) || { 
+          namaAsli: bon.namaPelanggan, 
+          totalUtang: 0, 
+          bonIds: [],
+          items: []
+        };
+        existing.totalUtang += (bon.total || 0);
+        existing.bonIds.push(bon.uniqueId);
+        existing.items.push(...bon.items);
+        pelangganMap.set(key, existing);
+      });
+      
+      pembayaran.forEach(payment => {
+        const key = payment.namaPelanggan.toLowerCase();
+        const existing = pelangganMap.get(key);
+        if (existing) {
+          existing.totalBayar = (existing.totalBayar || 0) + (payment.jumlah || 0);
+          existing.paymentIds = existing.paymentIds || [];
+          existing.paymentIds.push(payment.uniqueId);
+          pelangganMap.set(key, existing);
+        }
+      });
+      
+      // Identifikasi pelanggan lunas
+      const pelangganLunas = [];
+      const bonIdsToRemove = [];
+      const paymentIdsToRemove = [];
+      
+      for (const [key, data] of pelangganMap) {
+        const totalBayar = data.totalBayar || 0;
+        const sisaUtang = data.totalUtang - totalBayar;
+        
+        if (sisaUtang <= 0) {
+          pelangganLunas.push({
+            nama: data.namaAsli,
+            totalUtang: data.totalUtang,
+            totalBayar: totalBayar,
+            kembalian: sisaUtang < 0 ? -sisaUtang : 0
+          });
+          bonIdsToRemove.push(...data.bonIds);
+          if (data.paymentIds) paymentIdsToRemove.push(...data.paymentIds);
+        }
       }
       
-      showToast('☁️ Mengambil data dari cloud...');
-      const remoteData = await fetchUserDataFromCloud(activeUser);
-      
-      if (remoteData && !remoteData.error) {
-        semuaBon = remoteData.semuaBon || [];
-        pembayaran = remoteData.pembayaran || [];
+      // Hapus data pelanggan lunas
+      if (bonIdsToRemove.length > 0) {
+        semuaBon = semuaBon.filter(bon => !bonIdsToRemove.includes(bon.uniqueId));
+        pembayaran = pembayaran.filter(payment => !paymentIdsToRemove.includes(payment.uniqueId));
+        await simpanKeStorage(true);
         
-        // Tambahkan uniqueId dan lastModified jika belum ada
+        // Tampilkan notifikasi
+        pelangganLunas.forEach(p => {
+          if (p.kembalian > 0) {
+            showToast(`💰 ${p.nama} sudah LUNAS dengan kembalian Rp ${p.kembalian.toLocaleString('id-ID')}`);
+          } else {
+            showToast(`✅ ${p.nama} sudah LUNAS, data otomatis dihapus`);
+          }
+        });
+      }
+      
+      return { removedCount: pelangganLunas.length, removedList: pelangganLunas };
+    }
+    
+    async function manualCleanupLunas() {
+      if (!activeUser) { showToast("❌ Harap login terlebih dahulu!", true); return; }
+      
+      showToast("🧹 Memeriksa dan menghapus data pelanggan lunas...");
+      const result = await autoCleanupLunasPelanggan();
+      
+      if (result.removedCount > 0) {
+        showToast(`✅ ${result.removedCount} pelanggan lunas telah dihapus`);
+        renderDaftarPelanggan();
+        
+        // Tampilkan detail di cleanupStats
+        const statsDiv = document.getElementById('cleanupStats');
+        if (statsDiv && result.removedList.length > 0) {
+          let html = `<strong>🧹 ${result.removedCount} pelanggan lunas dihapus:</strong><br>`;
+          result.removedList.forEach(p => {
+            html += `• ${p.nama}: Total Rp ${p.totalUtang.toLocaleString('id-ID')} - Bayar Rp ${p.totalBayar.toLocaleString('id-ID')}`;
+            if (p.kembalian > 0) html += ` (Kembalian: Rp ${p.kembalian.toLocaleString('id-ID')})`;
+            html += `<br>`;
+          });
+          statsDiv.innerHTML = html;
+          statsDiv.classList.remove('hidden');
+          setTimeout(() => statsDiv.classList.add('hidden'), 8000);
+        }
+      } else {
+        showToast(`✅ Tidak ada data pelanggan lunas yang perlu dihapus`);
+      }
+    }
+    
+    function updateSyncStatusUI(isConnected) {
+      const statusEl = document.getElementById('syncStatusText');
+      if (statusEl) {
+        if (isConnected) {
+          statusEl.textContent = 'Tersinkron';
+          statusEl.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+        } else {
+          statusEl.textContent = 'Offline';
+          statusEl.style.background = 'linear-gradient(135deg, #ecc94b, #d69e2e)';
+        }
+      }
+    }
+    
+    // ============ INDEXEDDB STORAGE ============
+    
+    async function initIndexedDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) {
+          useIndexedDB = false;
+          resolve(false);
+          return;
+        }
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => { useIndexedDB = false; resolve(false); };
+        request.onsuccess = (event) => {
+          dbInstance = event.target.result;
+          useIndexedDB = true;
+          resolve(true);
+        };
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (db.objectStoreNames.contains('userData')) db.deleteObjectStore('userData');
+          if (db.objectStoreNames.contains('users')) db.deleteObjectStore('users');
+          if (db.objectStoreNames.contains('hiddenBarang')) db.deleteObjectStore('hiddenBarang');
+          if (db.objectStoreNames.contains('syncQueue')) db.deleteObjectStore('syncQueue');
+          db.createObjectStore('userData', { keyPath: 'username' });
+          db.createObjectStore('users', { keyPath: 'username' });
+          db.createObjectStore('hiddenBarang', { keyPath: 'username' });
+          db.createObjectStore('syncQueue', { keyPath: 'uniqueId' });
+        };
+      });
+    }
+    
+    async function saveToIndexedDB(username, bonData, paymentData) {
+      if (!useIndexedDB || !dbInstance) return false;
+      return new Promise((resolve) => {
+        try {
+          const transaction = dbInstance.transaction(['userData'], 'readwrite');
+          const store = transaction.objectStore('userData');
+          store.put({ username: username.toLowerCase(), semuaBon: bonData, pembayaran: paymentData, lastUpdated: getISOTimestamp() });
+          transaction.oncomplete = () => resolve(true);
+          transaction.onerror = () => resolve(false);
+        } catch(e) { resolve(false); }
+      });
+    }
+    
+    async function loadFromIndexedDB(username) {
+      if (!useIndexedDB || !dbInstance) return null;
+      return new Promise((resolve) => {
+        try {
+          const transaction = dbInstance.transaction(['userData'], 'readonly');
+          const store = transaction.objectStore('userData');
+          const request = store.get(username.toLowerCase());
+          request.onsuccess = () => resolve(request.result ? { semuaBon: request.result.semuaBon || [], pembayaran: request.result.pembayaran || [] } : null);
+          request.onerror = () => resolve(null);
+        } catch(e) { resolve(null); }
+      });
+    }
+    
+    async function simpanKeStorage(forceSync = true) {
+      if (!activeUser) return false;
+      try {
+        if (useIndexedDB && dbInstance) await saveToIndexedDB(activeUser, semuaBon, pembayaran);
+        const userKeySuffix = activeUser.toLowerCase();
+        localStorage.setItem(`semuaBon_v37_${userKeySuffix}`, JSON.stringify(semuaBon));
+        localStorage.setItem(`pembayaran_v37_${userKeySuffix}`, JSON.stringify(pembayaran));
+        return true;
+      } catch (e) {
+        showToast(`⚠️ Gagal simpan: ${e.message}`, true);
+        return false;
+      }
+    }
+    
+    async function loadData() {
+      if (!activeUser) return;
+      try {
+        let bonParsed = [], bayarParsed = [];
+        if (useIndexedDB && dbInstance) {
+          const indexedData = await loadFromIndexedDB(activeUser);
+          if (indexedData && (indexedData.semuaBon.length > 0 || indexedData.pembayaran.length > 0)) {
+            bonParsed = indexedData.semuaBon;
+            bayarParsed = indexedData.pembayaran;
+          } else {
+            const userKeySuffix = activeUser.toLowerCase();
+            const storedBon = localStorage.getItem(`semuaBon_v37_${userKeySuffix}`);
+            const storedBayar = localStorage.getItem(`pembayaran_v37_${userKeySuffix}`);
+            bonParsed = safeParseJSON(storedBon) || [];
+            bayarParsed = safeParseJSON(storedBayar) || [];
+          }
+        } else {
+          const userKeySuffix = activeUser.toLowerCase();
+          const storedBon = localStorage.getItem(`semuaBon_v37_${userKeySuffix}`);
+          const storedBayar = localStorage.getItem(`pembayaran_v37_${userKeySuffix}`);
+          bonParsed = safeParseJSON(storedBon) || [];
+          bayarParsed = safeParseJSON(storedBayar) || [];
+        }
+        semuaBon = Array.isArray(bonParsed) ? bonParsed : [];
+        pembayaran = Array.isArray(bayarParsed) ? bayarParsed : [];
+        
         semuaBon = semuaBon.map(bon => {
           if (!bon.uniqueId) bon.uniqueId = generateUniqueId();
           if (!bon.lastModified) bon.lastModified = getISOTimestamp();
@@ -1265,25 +1684,49 @@
           return p;
         });
         
-        renderDaftarPelanggan();
-        showToast(`✅ Data berhasil dimuat! (${semuaBon.length} bon)`);
-        return true;
-      } else if (remoteData?.error === 'NO_DATA') {
-        semuaBon = [];
-        pembayaran = [];
-        renderDaftarPelanggan();
-        showToast('📭 Belum ada data untuk user ini');
-        return true;
-      } else {
-        showToast(`⚠️ Gagal mengambil data: ${remoteData?.error}`, true);
-        return false;
+        await loadHiddenBarangMap();
+      } catch (e) {
+        semuaBon = []; pembayaran = [];
       }
     }
     
-    // ============ AUTHENTICATION SYSTEM (Cloud Only) ============
+    let hiddenBarangMap = {};
+    async function loadHiddenBarangMap() {
+      try {
+        const saved = localStorage.getItem('hiddenBarangMap_v37');
+        const parsed = safeParseJSON(saved);
+        hiddenBarangMap = parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (e) { hiddenBarangMap = {}; }
+    }
+    async function saveHiddenBarangMap() {
+      localStorage.setItem('hiddenBarangMap_v37', JSON.stringify(hiddenBarangMap));
+    }
+    
+    function getBarangVisible(namaPelanggan) {
+      if (!namaPelanggan) return true;
+      const key = namaPelanggan.toLowerCase();
+      return hiddenBarangMap[key] !== false;
+    }
+    async function toggleBarang(namaPelanggan) {
+      if (!namaPelanggan) return;
+      const key = namaPelanggan.toLowerCase();
+      const currentlyVisible = getBarangVisible(namaPelanggan);
+      hiddenBarangMap[key] = currentlyVisible ? false : true;
+      await saveHiddenBarangMap();
+      renderDaftarPelanggan();
+    }
+    
+    // ============ AUTHENTICATION SYSTEM ============
+    let usersData = {};
+    async function loadAuthData() {
+      const saved = localStorage.getItem('auth_users_v37');
+      usersData = safeParseJSON(saved) || {};
+    }
+    async function saveAuthData() {
+      localStorage.setItem('auth_users_v37', JSON.stringify(usersData));
+    }
     
     const REMEMBER_KEY = 'bon_remember_creds_v37';
-    
     function saveRememberMe() {
       const username = document.getElementById('authUsername').value.trim();
       const password = document.getElementById('authPassword').value.trim();
@@ -1291,7 +1734,6 @@
       if (isChecked && username && password) localStorage.setItem(REMEMBER_KEY, JSON.stringify({ username, password }));
       else if (!isChecked) localStorage.removeItem(REMEMBER_KEY);
     }
-    
     function loadRememberMe() {
       const saved = localStorage.getItem(REMEMBER_KEY);
       if (saved) {
@@ -1343,15 +1785,12 @@
     }
     
     async function handleAuthSubmit() {
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet! Aplikasi hanya bisa diakses online.', true);
-        return;
-      }
-      
       const u = document.getElementById('authUsername').value.trim();
       const p = document.getElementById('authPassword').value.trim();
       
       if (!u || !p) { showToast("❗ Bidang teks tidak boleh kosong!", true); return; }
+      
+      await loadAuthData();
       
       if (currentAuthTab === 'register') {
         const qPetVal = document.getElementById('qPet').value.trim().toLowerCase();
@@ -1363,103 +1802,119 @@
           return; 
         }
         
-        showToast('📝 Mendaftarkan akun...');
-        const result = await cloudRegister(u, p, { pet: qPetVal, hobby: qHobbyVal, food: qFoodVal });
+        if (usersData[u.toLowerCase()]) { 
+          showToast("❌ Username sudah terdaftar!", true);
+          return; 
+        }
         
-        if (result && result.success) {
-          showToast("✅ Registrasi berhasil! Silakan login.");
-          switchAuthTab('login');
-        } else {
-          showToast(`❌ Registrasi gagal: ${result?.message || 'Unknown error'}`, true);
+        const newUserData = { 
+          username: u, 
+          password: p, 
+          security: { pet: qPetVal, hobby: qHobbyVal, food: qFoodVal },
+          registeredAt: getISOTimestamp()
+        };
+        
+        usersData[u.toLowerCase()] = newUserData;
+        await saveAuthData();
+        
+        activeUser = u;
+        sessionStorage.setItem('active_session_user', activeUser);
+        semuaBon = [];
+        pembayaran = [];
+        await simpanKeStorage(false);
+        await checkAppSessionStatus();
+        showToast("✅ Registrasi berhasil!");
+        
+        // Setelah registrasi, sync data ke cloud
+        if (navigator.onLine) {
+          setTimeout(() => syncAfterLogin(), 1000);
         }
         
       } else if (currentAuthTab === 'forgot') {
+        const existingUser = usersData[u.toLowerCase()];
+        if (!existingUser) { 
+          showToast("❌ Username tidak ditemukan!", true);
+          return; 
+        }
+        
         const qPetVal = document.getElementById('qPet').value.trim().toLowerCase();
         const qHobbyVal = document.getElementById('qHobby').value.trim().toLowerCase();
         const qFoodVal = document.getElementById('qFood').value.trim().toLowerCase();
         
-        if (!qPetVal || !qHobbyVal || !qFoodVal) { 
-          showToast("❗ Jawaban pertanyaan keamanan wajib diisi!", true);
+        if (!existingUser.security || existingUser.security.pet !== qPetVal || 
+            existingUser.security.hobby !== qHobbyVal || existingUser.security.food !== qFoodVal) { 
+          showToast("❌ Jawaban pertanyaan keamanan salah!", true);
           return; 
         }
         
-        showToast('🔄 Memproses reset password...');
-        const result = await cloudResetPassword(u, p, { pet: qPetVal, hobby: qHobbyVal, food: qFoodVal });
-        
-        if (result && result.success) {
-          showToast("✅ Password berhasil diganti! Silakan login.");
-          switchAuthTab('login');
-        } else {
-          showToast(`❌ Reset gagal: ${result?.message || 'Jawaban keamanan salah'}`, true);
-        }
+        existingUser.password = p;
+        usersData[u.toLowerCase()] = existingUser;
+        await saveAuthData();
+        showToast("✅ Password berhasil diganti!");
+        switchAuthTab('login');
         
       } else {
-        showToast('🔐 Memverifikasi...');
-        const result = await cloudLogin(u, p);
+        const existingUser = usersData[u.toLowerCase()];
+        if (!existingUser) { showToast("❌ Username tidak ditemukan!", true); return; }
+        if (existingUser.password !== p) { showToast("❌ Password salah!", true); return; }
         
-        if (result && result.success) {
-          activeUser = u;
-          sessionStorage.setItem('active_session_user', activeUser);
-          saveRememberMe();
-          showToast("✅ Berhasil masuk! Memuat data...");
-          
-          await loadDataFromCloud();
-          await checkAppSessionStatus();
-          renderDaftarPelanggan();
+        activeUser = existingUser.username;
+        sessionStorage.setItem('active_session_user', activeUser);
+        saveRememberMe();
+        showToast("✅ Berhasil masuk! Memuat data...");
+        
+        await checkAppSessionStatus();
+        await loadData();
+        renderDaftarPelanggan();
+        
+        // FITUR UTAMA v37: Setelah login, sync data dari cloud
+        if (navigator.onLine) {
+          setTimeout(() => syncAfterLogin(), 500);
         } else {
-          showToast(`❌ Login gagal: ${result?.message || 'Username/Password salah'}`, true);
+          showToast("⚠️ Anda offline. Data akan sinkron saat koneksi tersedia.", true);
         }
       }
     }
     
     async function executeLogout() {
       if (activeUser && navigator.onLine) {
-        await autoSyncToCloud();
+        await pushAllLocalDataToCloud();
       }
       
       activeUser = null;
       sessionStorage.removeItem('active_session_user');
-      semuaBon = [];
-      pembayaran = [];
-      keranjang = [];
+      semuaBon = []; pembayaran = []; keranjang = []; hiddenBarangMap = {};
       await checkAppSessionStatus();
       showToast("🚪 Anda telah keluar.");
     }
     
     async function checkAppSessionStatus() {
       activeUser = sessionStorage.getItem('active_session_user');
-      if (activeUser && navigator.onLine) {
+      if (activeUser) {
         document.getElementById('currentUsernameLabel').textContent = activeUser;
         document.getElementById('authHeaderBar').classList.remove('hidden');
         document.getElementById('authScreenSection').classList.add('hidden');
         document.getElementById('mainAppSection').classList.remove('hidden');
-        updateOnlineStatus();
-      } else if (activeUser && !navigator.onLine) {
-        // Jika offline, logout otomatis
-        sessionStorage.removeItem('active_session_user');
-        activeUser = null;
-        document.getElementById('authHeaderBar').classList.add('hidden');
-        document.getElementById('authScreenSection').classList.remove('hidden');
-        document.getElementById('mainAppSection').classList.add('hidden');
-        switchAuthTab('login');
-        updateOnlineStatus();
+        
+        if (syncInterval) clearInterval(syncInterval);
+        syncInterval = setInterval(() => {
+          if (activeUser && navigator.onLine && !isSyncing) {
+            autoCleanupLunasPelanggan();
+            pushAllLocalDataToCloud();
+          }
+        }, 60000); // Auto sync setiap 60 detik
+        
       } else {
+        if (syncInterval) clearInterval(syncInterval);
         document.getElementById('authHeaderBar').classList.add('hidden');
         document.getElementById('authScreenSection').classList.remove('hidden');
         document.getElementById('mainAppSection').classList.add('hidden');
         switchAuthTab('login');
-        updateOnlineStatus();
       }
     }
     
     // ============ KERANJANG & BON ============
     function tambahBarangKeBon() {
-      if (!activeUser) return;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return;
-      }
-      
       let nama = document.getElementById('namaBarangManual').value.trim();
       let hargaStr = document.getElementById('hargaBarangManual').value.trim();
       let qtyStr = document.getElementById('jumlahBarangManual').value.trim();
@@ -1500,12 +1955,6 @@
     }
     
     async function simpanBonBaru() {
-      if (!activeUser) return;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return;
-      }
-      
       let nama = document.getElementById('namaPelanggan').value.trim();
       if (!nama) { showToast("❗ Masukkan nama pelanggan!", true); return; }
       if (keranjang.length === 0) { showToast("❗ Bon masih kosong!", true); return; }
@@ -1526,20 +1975,17 @@
         lastModified: getISOTimestamp()
       };
       semuaBon.push(bonBaru);
-      
-      // Auto sync ke cloud
-      const syncSuccess = await autoSyncToCloud();
-      if (syncSuccess) {
+      if (await simpanKeStorage(true)) {
         renderDaftarPelanggan();
         keranjang = [];
         document.getElementById('namaPelanggan').value = '';
         renderKeranjangBon();
         hideAutocomplete('pelanggan');
-        showToast("✅ Bon berhasil disimpan dan tersinkron!");
-      } else {
-        // Rollback jika sync gagal
-        semuaBon.pop();
-        showToast("❌ Gagal menyimpan bon ke cloud", true);
+        showToast("✅ Bon berhasil disimpan!");
+        
+        if (navigator.onLine) {
+          setTimeout(() => pushAllLocalDataToCloud(), 500);
+        }
       }
     }
     
@@ -1552,12 +1998,6 @@
     }
     
     async function simpanEditNama() {
-      if (!activeUser) return;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return;
-      }
-      
       const namaLama = document.getElementById('namaLama').value;
       let namaBaru = document.getElementById('inputNamaBaru').value.trim();
       if (!namaBaru) { showToast("❗ Nama tidak boleh kosong!", true); return; }
@@ -1569,24 +2009,15 @@
       const lowerLama = namaLama.toLowerCase();
       semuaBon = semuaBon.map(bon => bon.namaPelanggan.toLowerCase() === lowerLama ? { ...bon, namaPelanggan: namaBaru, lastModified: getISOTimestamp() } : bon);
       pembayaran = pembayaran.map(p => p.namaPelanggan.toLowerCase() === lowerLama ? { ...p, namaPelanggan: namaBaru, lastModified: getISOTimestamp() } : p);
-      
-      const syncSuccess = await autoSyncToCloud();
-      if (syncSuccess) {
+      if (await simpanKeStorage(true)) {
+        if (hiddenBarangMap[lowerLama] !== undefined) { hiddenBarangMap[lowerBaru] = hiddenBarangMap[lowerLama]; delete hiddenBarangMap[lowerLama]; await saveHiddenBarangMap(); }
         renderDaftarPelanggan();
         tutupModal('modalEditNama');
         showToast("✅ Nama berhasil diubah!");
-      } else {
-        showToast("❌ Gagal menyimpan perubahan", true);
       }
     }
     
     async function bayarUtang(namaPelanggan) {
-      if (!activeUser) return;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return;
-      }
-      
       if (!namaPelanggan) return;
       const nominal = prompt(`💰 Bayar berapa untuk ${namaPelanggan}?`);
       if (nominal === null) return;
@@ -1600,36 +2031,33 @@
         lastModified: getISOTimestamp()
       };
       pembayaran.push(pembayaranBaru);
-      
-      const syncSuccess = await autoSyncToCloud();
-      if (syncSuccess) {
+      if (await simpanKeStorage(true)) {
         renderDaftarPelanggan();
         showToast(`✅ Pembayaran Rp ${jumlah.toLocaleString('id-ID')} berhasil dicatat!`);
-      } else {
-        pembayaran.pop();
-        showToast("❌ Gagal menyimpan pembayaran", true);
+        
+        // Cek dan hapus jika lunas
+        const result = await autoCleanupLunasPelanggan();
+        if (result.removedCount > 0) {
+          renderDaftarPelanggan();
+        }
+        
+        if (navigator.onLine) {
+          setTimeout(() => pushAllLocalDataToCloud(), 500);
+        }
       }
     }
     
     async function hapusPelanggan(namaPelanggan) {
-      if (!activeUser) return;
-      if (!navigator.onLine) {
-        showToast('❌ Tidak ada koneksi internet!', true);
-        return;
-      }
-      
       if (!namaPelanggan) return;
       if (!confirm(`⚠️ Hapus SEMUA data "${namaPelanggan}"?`)) return;
       const key = namaPelanggan.toLowerCase();
       semuaBon = semuaBon.filter(bon => bon.namaPelanggan.toLowerCase() !== key);
       pembayaran = pembayaran.filter(p => p.namaPelanggan.toLowerCase() !== key);
-      
-      const syncSuccess = await autoSyncToCloud();
-      if (syncSuccess) {
+      delete hiddenBarangMap[key];
+      await saveHiddenBarangMap();
+      if (await simpanKeStorage(true)) {
         renderDaftarPelanggan();
         showToast(`🗑️ Data ${namaPelanggan} berhasil dihapus!`);
-      } else {
-        showToast("❌ Gagal menghapus data", true);
       }
     }
     
@@ -1813,18 +2241,20 @@
           Sudah Dibayar: Rp ${totalDibayar.toLocaleString('id-ID')}<br>
           <strong>Sisa Utang: Rp ${Math.max(0, sisaUtang).toLocaleString('id-ID')}</strong> ${statusHtml}<br><br>`;
         
-        p.bonList.forEach((bon, idx) => {
-          let itemsList = '';
-          if (bon.items) {
-            itemsList = bon.items.map(item => `• ${safeString(item.nama)} (x${item.qty}) = Rp ${(item.hargaSaatItu * item.qty).toLocaleString('id-ID')}`).join('<br>');
-          }
-          if (itemsList) {
-            content += `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #c3dafe;">
-              <strong>Bon #${idx+1} (Total: Rp ${bon.total.toLocaleString('id-ID')})</strong><br>${itemsList}
-              <div class="bon-timestamp">📅 ${bon.waktu}</div>
-            </div>`;
-          }
-        });
+        if (getBarangVisible(p.namaAsli)) {
+          p.bonList.forEach((bon, idx) => {
+            let itemsList = '';
+            if (bon.items) {
+              itemsList = bon.items.map(item => `• ${safeString(item.nama)} (x${item.qty}) = Rp ${(item.hargaSaatItu * item.qty).toLocaleString('id-ID')}`).join('<br>');
+            }
+            if (itemsList) {
+              content += `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #c3dafe;">
+                <strong>Bon #${idx+1} (Total: Rp ${bon.total.toLocaleString('id-ID')})</strong><br>${itemsList}
+                <div class="bon-timestamp">📅 ${bon.waktu}</div>
+              </div>`;
+            }
+          });
+        }
         
         const riwayatBayar = pembayaran.filter(pay => pay.namaPelanggan.toLowerCase() === key)
           .map(pb => `<div class="timestamp">💰 Bayar: Rp ${pb.jumlah.toLocaleString('id-ID')} (${pb.waktu})</div>`).join('');
@@ -1836,6 +2266,7 @@
           <button class="btn-hapus" onclick='hapusPelanggan("${p.namaAsli.replace(/"/g, '&quot;')}")'>🗑️ Hapus</button>
           <button class="btn-share" onclick='bukaBagikan("${p.namaAsli.replace(/"/g, '&quot;')}")'>📤 Bagikan</button>
           <button class="btn-salin" onclick='salinSemua("${p.namaAsli.replace(/"/g, '&quot;')}")'>📋 Salin</button>
+          <button class="btn-sync" onclick='toggleBarang("${p.namaAsli.replace(/"/g, '&quot;')}")'>👁️ ${getBarangVisible(p.namaAsli) ? 'Sembunyikan' : 'Tampilkan'} Barang</button>
         </div></div>`;
         
         html += content;
@@ -1849,32 +2280,17 @@
       if (el) el.classList.add('hidden');
     }
     
-    let filterTimeout;
-    function debouncedFilterPelanggan() {
-      clearTimeout(filterTimeout);
-      filterTimeout = setTimeout(() => renderDaftarPelanggan(), 300);
-    }
-    
     // ============ INIT ============
     async function init() {
-      // Monitor online status
-      window.addEventListener('online', () => {
-        updateOnlineStatus();
-        if (activeUser) {
-          showToast('🟢 Kembali online! Memuat ulang data...');
-          loadDataFromCloud();
-        }
-      });
-      window.addEventListener('offline', () => {
-        updateOnlineStatus();
-        if (activeUser) {
-          showToast('🔴 Koneksi terputus! Aplikasi akan logout.', true);
-          executeLogout();
-        }
-      });
-      
-      updateOnlineStatus();
+      await initIndexedDB();
       await checkAppSessionStatus();
+      
+      // Auto sync interval setiap 1 menit
+      setInterval(() => {
+        if (activeUser && navigator.onLine && !isSyncing) {
+          pushAllLocalDataToCloud();
+        }
+      }, 60000);
     }
     
     init();
