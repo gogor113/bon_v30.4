@@ -45,13 +45,13 @@ function initializeSheets(spreadsheet) {
     paymentSheet.setFrozenRows(1);
   }
   
-  // Sheet untuk metadata user
+  // Sheet untuk metadata user (AUTH SYSTEM)
   let userSheet = spreadsheet.getSheetByName('user_metadata');
   if (!userSheet) {
     userSheet = spreadsheet.insertSheet('user_metadata');
-    userSheet.getRange(1, 1, 1, 8).setValues([[
+    userSheet.getRange(1, 1, 1, 9).setValues([[
       'username', 'passwordHash', 'securityPet', 'securityHobby',
-      'securityFood', 'registeredAt', 'lastLogin', 'deviceIds'
+      'securityFood', 'registeredAt', 'lastLogin', 'deviceIds', 'isActive'
     ]]);
     userSheet.setFrozenRows(1);
   }
@@ -60,8 +60,8 @@ function initializeSheets(spreadsheet) {
   let syncLogSheet = spreadsheet.getSheetByName('sync_log');
   if (!syncLogSheet) {
     syncLogSheet = spreadsheet.insertSheet('sync_log');
-    syncLogSheet.getRange(1, 1, 1, 6).setValues([[
-      'timestamp', 'username', 'action', 'recordCount', 'deviceId', 'status'
+    syncLogSheet.getRange(1, 1, 1, 7).setValues([[
+      'timestamp', 'username', 'action', 'recordCount', 'deviceId', 'status', 'details'
     ]]);
     syncLogSheet.setFrozenRows(1);
   }
@@ -84,12 +84,18 @@ function handleRequest(e) {
     if (e && typeof e === 'object') {
       // Cek berbagai kemungkinan struktur parameter
       if (e.parameter && typeof e.parameter === 'object') {
-        params = e.parameter;
+        // Flatten parameter dari e.parameter
+        for (const key in e.parameter) {
+          if (e.parameter.hasOwnProperty(key)) {
+            params[key] = e.parameter[key];
+          }
+        }
       } else if (e.postData && e.postData.contents) {
-        // Handle POST data dalam format URL encoded atau JSON
+        // Handle POST data dalam format URL encoded
         const content = e.postData.contents;
         if (content) {
           try {
+            // Coba parse sebagai JSON
             const parsed = JSON.parse(content);
             params = parsed;
           } catch(jsonError) {
@@ -107,13 +113,13 @@ function handleRequest(e) {
           params[key] = value;
         }
       } else if (e.parameters && typeof e.parameters === 'object') {
-        params = e.parameters;
-        // Flatten array values
-        Object.keys(params).forEach(key => {
-          if (Array.isArray(params[key]) && params[key].length === 1) {
-            params[key] = params[key][0];
+        for (const key in e.parameters) {
+          if (e.parameters.hasOwnProperty(key)) {
+            params[key] = Array.isArray(e.parameters[key]) && e.parameters[key].length === 1 
+              ? e.parameters[key][0] 
+              : e.parameters[key];
           }
-        });
+        }
       }
     }
   } catch(paramError) {
@@ -142,7 +148,19 @@ function handleRequest(e) {
         result = { success: true, version: SCRIPT_VERSION, message: 'Cloud siap digunakan', timestamp: new Date().toISOString() };
         break;
       case 'getUserData':
-        result = getUserData(params);
+        result = handleGetUserData(params);
+        break;
+      case 'pushUserData':
+        result = handlePushUserData(params);
+        break;
+      case 'register':
+        result = handleRegister(params);
+        break;
+      case 'login':
+        result = handleLogin(params);
+        break;
+      case 'forgotPassword':
+        result = handleForgotPassword(params);
         break;
       case 'syncBatch':
         result = handleBatchSync(params);
@@ -154,7 +172,7 @@ function handleRequest(e) {
         result = { 
           success: false, 
           error: `Unknown action: ${action || '(empty)'}`,
-          availableActions: ['mergeBackupV36', 'restoreV36', 'testConnection', 'getUserData', 'syncBatch', 'cleanupOldData']
+          availableActions: ['mergeBackupV36', 'restoreV36', 'testConnection', 'getUserData', 'pushUserData', 'register', 'login', 'forgotPassword', 'syncBatch', 'cleanupOldData']
         };
     }
   } catch(error) {
@@ -174,6 +192,289 @@ function handleRequest(e) {
   return output;
 }
 
+// ==================== AUTHENTICATION SYSTEM ====================
+
+function handleRegister(params) {
+  try {
+    const username = params.username || '';
+    const password = params.password || '';
+    const security = params.security || {};
+    
+    if (!username || !password) {
+      return { success: false, error: 'Username dan password harus diisi' };
+    }
+    
+    if (username.length < 3) {
+      return { success: false, error: 'Username minimal 3 karakter' };
+    }
+    
+    if (password.length < 4) {
+      return { success: false, error: 'Password minimal 4 karakter' };
+    }
+    
+    const spreadsheet = getOrCreateSpreadsheet();
+    const userSheet = spreadsheet.getSheetByName('user_metadata');
+    
+    // Cek apakah username sudah ada
+    const existingUser = getUserFromSheet(userSheet, username);
+    if (existingUser) {
+      return { success: false, error: 'Username sudah terdaftar' };
+    }
+    
+    // Hash password sederhana (untuk keamanan dasar)
+    const passwordHash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, password)
+      .map(b => ('0' + (b & 0xFF).toString(16)).slice(-2))
+      .join('');
+    
+    const securityPet = (security.pet || '').toLowerCase();
+    const securityHobby = (security.hobby || '').toLowerCase();
+    const securityFood = (security.food || '').toLowerCase();
+    
+    if (!securityPet || !securityHobby || !securityFood) {
+      return { success: false, error: 'Pertanyaan keamanan harus diisi' };
+    }
+    
+    const now = new Date().toISOString();
+    const deviceId = params.deviceId || '';
+    
+    const lastRow = userSheet.getLastRow();
+    userSheet.getRange(lastRow + 1, 1, 1, 9).setValues([[
+      username.toLowerCase(),
+      passwordHash,
+      securityPet,
+      securityHobby,
+      securityFood,
+      now,
+      now,
+      deviceId,
+      true
+    ]]);
+    
+    logSyncActivity(username, 'register', 0, deviceId, 'success');
+    
+    return {
+      success: true,
+      message: 'Registrasi berhasil',
+      username: username
+    };
+    
+  } catch(error) {
+    console.error('Register error:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleLogin(params) {
+  try {
+    const username = params.username || '';
+    const password = params.password || '';
+    
+    if (!username || !password) {
+      return { success: false, error: 'Username dan password harus diisi' };
+    }
+    
+    const spreadsheet = getOrCreateSpreadsheet();
+    const userSheet = spreadsheet.getSheetByName('user_metadata');
+    
+    const userData = getUserFromSheet(userSheet, username);
+    
+    if (!userData) {
+      return { success: false, error: 'Username tidak ditemukan' };
+    }
+    
+    const passwordHash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, password)
+      .map(b => ('0' + (b & 0xFF).toString(16)).slice(-2))
+      .join('');
+    
+    if (userData.passwordHash !== passwordHash) {
+      return { success: false, error: 'Password salah' };
+    }
+    
+    if (userData.isActive !== true) {
+      return { success: false, error: 'Akun tidak aktif' };
+    }
+    
+    // Update last login
+    const now = new Date().toISOString();
+    userSheet.getRange(userData.rowIndex, 7, 1, 1).setValue(now);
+    
+    // Update deviceIds
+    const deviceId = params.deviceId || '';
+    let deviceIds = userData.deviceIds || '';
+    if (deviceId && !deviceIds.includes(deviceId)) {
+      const newDeviceIds = deviceIds ? `${deviceIds},${deviceId}` : deviceId;
+      userSheet.getRange(userData.rowIndex, 8, 1, 1).setValue(newDeviceIds);
+    }
+    
+    logSyncActivity(username, 'login', 0, deviceId, 'success');
+    
+    return {
+      success: true,
+      message: 'Login berhasil',
+      username: username,
+      userData: {
+        username: userData.username,
+        registeredAt: userData.registeredAt,
+        lastLogin: now
+      }
+    };
+    
+  } catch(error) {
+    console.error('Login error:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleForgotPassword(params) {
+  try {
+    const username = params.username || '';
+    const newPassword = params.newPassword || '';
+    const security = params.security || {};
+    
+    if (!username || !newPassword) {
+      return { success: false, error: 'Username dan password baru harus diisi' };
+    }
+    
+    if (newPassword.length < 4) {
+      return { success: false, error: 'Password minimal 4 karakter' };
+    }
+    
+    const spreadsheet = getOrCreateSpreadsheet();
+    const userSheet = spreadsheet.getSheetByName('user_metadata');
+    
+    const userData = getUserFromSheet(userSheet, username);
+    
+    if (!userData) {
+      return { success: false, error: 'Username tidak ditemukan' };
+    }
+    
+    const securityPet = (security.pet || '').toLowerCase();
+    const securityHobby = (security.hobby || '').toLowerCase();
+    const securityFood = (security.food || '').toLowerCase();
+    
+    if (userData.securityPet !== securityPet || 
+        userData.securityHobby !== securityHobby || 
+        userData.securityFood !== securityFood) {
+      return { success: false, error: 'Jawaban pertanyaan keamanan salah' };
+    }
+    
+    const newPasswordHash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, newPassword)
+      .map(b => ('0' + (b & 0xFF).toString(16)).slice(-2))
+      .join('');
+    
+    userSheet.getRange(userData.rowIndex, 2, 1, 1).setValue(newPasswordHash);
+    
+    logSyncActivity(username, 'forgotPassword', 0, params.deviceId || '', 'success');
+    
+    return {
+      success: true,
+      message: 'Password berhasil direset'
+    };
+    
+  } catch(error) {
+    console.error('Forgot password error:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handleGetUserData(params) {
+  try {
+    const username = params.username || '';
+    
+    if (!username) {
+      return { success: false, error: 'Username required' };
+    }
+    
+    const spreadsheet = getOrCreateSpreadsheet();
+    const bonSheet = spreadsheet.getSheetByName('bon_data');
+    const paymentSheet = spreadsheet.getSheetByName('payment_data');
+    
+    let semuaBon = getAllUserBonData(bonSheet, username);
+    let pembayaran = getAllUserPaymentData(paymentSheet, username);
+    
+    const formattedBons = semuaBon.map(b => {
+      let items = [];
+      try {
+        items = JSON.parse(b.items || '[]');
+      } catch(e) {
+        items = [];
+      }
+      return {
+        uniqueId: b.uniqueId,
+        namaPelanggan: b.namaPelanggan,
+        total: b.total,
+        items: items,
+        waktu: b.waktu,
+        lastModified: b.lastModified || b.originalTimestamp
+      };
+    });
+    
+    const formattedPayments = pembayaran.map(p => ({
+      uniqueId: p.uniqueId,
+      namaPelanggan: p.namaPelanggan,
+      jumlah: p.jumlah,
+      waktu: p.waktu,
+      lastModified: p.lastModified || p.originalTimestamp
+    }));
+    
+    return {
+      success: true,
+      semuaBon: formattedBons,
+      pembayaran: formattedPayments,
+      lastModified: new Date().toISOString()
+    };
+    
+  } catch(error) {
+    console.error('Get user data error:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+function handlePushUserData(params) {
+  try {
+    const username = params.username || '';
+    let semuaBon = [];
+    let pembayaran = [];
+    
+    try {
+      semuaBon = typeof params.semuaBon === 'string' ? JSON.parse(params.semuaBon) : (params.semuaBon || []);
+      pembayaran = typeof params.pembayaran === 'string' ? JSON.parse(params.pembayaran) : (params.pembayaran || []);
+    } catch(e) {
+      return { success: false, error: 'Invalid data format' };
+    }
+    
+    if (!username) {
+      return { success: false, error: 'Username required' };
+    }
+    
+    const spreadsheet = getOrCreateSpreadsheet();
+    const bonSheet = spreadsheet.getSheetByName('bon_data');
+    const paymentSheet = spreadsheet.getSheetByName('payment_data');
+    const deviceId = params.deviceId || '';
+    
+    const bonResult = mergeBonDataV36(bonSheet, username, semuaBon, deviceId);
+    const paymentResult = mergePaymentDataV36(paymentSheet, username, pembayaran, deviceId);
+    
+    logSyncActivity(username, 'pushUserData', bonResult.added + paymentResult.added, deviceId, 'success');
+    
+    const cleanedUp = autoCleanupCloudData(username);
+    
+    return {
+      success: true,
+      mergedBonCount: bonResult.merged,
+      mergedPaymentCount: paymentResult.merged,
+      addedBonCount: bonResult.added,
+      addedPaymentCount: paymentResult.added,
+      cleanedUp: cleanedUp,
+      message: `Data berhasil disimpan: ${bonResult.added} bon baru, ${paymentResult.added} pembayaran baru`
+    };
+    
+  } catch(error) {
+    console.error('Push user data error:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
 // ==================== CORE MERGE LOGIC ====================
 function handleMergeBackup(params) {
   try {
@@ -182,8 +483,12 @@ function handleMergeBackup(params) {
     let dataJson = params.data || params.backupData || '';
     
     if (typeof dataJson === 'string' && dataJson.trim()) {
-      backupData = JSON.parse(dataJson);
-    } else if (typeof params === 'object' && params.semuaBon) {
+      try {
+        backupData = JSON.parse(dataJson);
+      } catch(e) {
+        return { success: false, error: 'Invalid JSON data' };
+      }
+    } else if (typeof params === 'object' && (params.semuaBon || params.pembayaran)) {
       backupData = params;
     } else {
       return { success: false, error: 'No data provided. Expected field: data' };
@@ -519,7 +824,11 @@ function handleBatchSync(params) {
     let batchData = params.batchData || params.data || '[]';
     
     if (typeof batchData === 'string') {
-      batchData = JSON.parse(batchData);
+      try {
+        batchData = JSON.parse(batchData);
+      } catch(e) {
+        return { success: false, error: 'Invalid batch data format' };
+      }
     }
     
     if (!username || !batchData.length) {
@@ -563,36 +872,6 @@ function handleBatchSync(params) {
   }
 }
 
-// ==================== USER MANAGEMENT ====================
-function getUserData(params) {
-  try {
-    const username = params.username;
-    if (!username) {
-      return { success: false, error: 'Username required' };
-    }
-    
-    const spreadsheet = getOrCreateSpreadsheet();
-    const userSheet = spreadsheet.getSheetByName('user_metadata');
-    const userData = getUserFromSheet(userSheet, username);
-    
-    if (!userData) {
-      return { success: false, error: 'User not found' };
-    }
-    
-    return {
-      success: true,
-      user: {
-        username: userData.username,
-        registeredAt: userData.registeredAt,
-        lastLogin: userData.lastLogin
-      }
-    };
-    
-  } catch(error) {
-    return { success: false, error: error.toString() };
-  }
-}
-
 function handleCleanupOldData(params) {
   try {
     const username = params.username;
@@ -626,9 +905,13 @@ function generateUniqueId() {
 }
 
 function generateDataHash(data) {
-  const str = JSON.stringify(data);
-  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, str);
-  return digest.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+  try {
+    const str = JSON.stringify(data);
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, str);
+    return digest.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+  } catch(e) {
+    return Date.now().toString();
+  }
 }
 
 function getAllUserBonData(sheet, username) {
@@ -702,11 +985,11 @@ function getUserFromSheet(sheet, username) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
   
-  const range = sheet.getRange(2, 1, lastRow - 1, 8);
+  const range = sheet.getRange(2, 1, lastRow - 1, 9);
   const values = range.getValues();
   
   for (let i = 0; i < values.length; i++) {
-    if (values[i][0] === username) {
+    if (values[i][0] === username.toLowerCase()) {
       return {
         rowIndex: i + 2,
         username: values[i][0],
@@ -716,7 +999,8 @@ function getUserFromSheet(sheet, username) {
         securityFood: values[i][4],
         registeredAt: values[i][5],
         lastLogin: values[i][6],
-        deviceIds: values[i][7]
+        deviceIds: values[i][7],
+        isActive: values[i][8] === true
       };
     }
   }
@@ -777,29 +1061,29 @@ function deleteOldData(sheet, username, cutoffDate) {
   
   const range = sheet.getRange(2, 1, lastRow - 1, 12);
   const values = range.getValues();
-  const idsToDelete = [];
+  const rowsToKeep = [];
+  let deletedCount = 0;
   
   for (let i = 0; i < values.length; i++) {
     const row = values[i];
     const lastModified = new Date(row[6] || row[10]);
     if (row[1] === username && lastModified < cutoffDate && row[9] === true) {
-      idsToDelete.push(row[0]);
-    }
-  }
-  
-  if (idsToDelete.length > 0) {
-    const newValues = values.filter(row => !idsToDelete.includes(row[0]));
-    if (newValues.length > 0) {
-      sheet.getRange(2, 1, newValues.length, 12).setValues(newValues);
-      if (newValues.length < values.length) {
-        sheet.deleteRows(2 + newValues.length, values.length - newValues.length);
-      }
+      deletedCount++;
     } else {
-      sheet.deleteRows(2, values.length);
+      rowsToKeep.push(row);
     }
   }
   
-  return idsToDelete.length;
+  if (rowsToKeep.length > 0) {
+    sheet.getRange(2, 1, rowsToKeep.length, 12).setValues(rowsToKeep);
+    if (rowsToKeep.length < values.length) {
+      sheet.deleteRows(2 + rowsToKeep.length, values.length - rowsToKeep.length);
+    }
+  } else if (values.length > 0) {
+    sheet.deleteRows(2, values.length);
+  }
+  
+  return deletedCount;
 }
 
 function logSyncActivity(username, action, recordCount, deviceId, status) {
@@ -809,13 +1093,14 @@ function logSyncActivity(username, action, recordCount, deviceId, status) {
     
     if (logSheet) {
       const lastRow = logSheet.getLastRow();
-      logSheet.getRange(lastRow + 1, 1, 1, 6).setValues([[
+      logSheet.getRange(lastRow + 1, 1, 1, 7).setValues([[
         new Date().toISOString(),
         username || 'unknown',
         action,
         recordCount || 0,
         deviceId || 'unknown',
-        status || 'unknown'
+        status || 'unknown',
+        ''
       ]]);
     }
   } catch(error) {
